@@ -1,4 +1,6 @@
 #include "melody.h"
+#include <avr/pgmspace.h>
+#include <stdint.h>
 
 volatile int operator_A = 0;
 volatile int operator_B = 0;
@@ -10,201 +12,97 @@ volatile int operator_B_add = 0;
 volatile int operator_C_add = 0;
 volatile int operator_D_add = 0;
 
+typedef struct {
+  const uint16_t* melodyA;
+  const uint16_t* melodyC;
+  const uint16_t* melodyD;
+  const uint16_t* time;
+  uint8_t length;
+} MelodySection;
+
 void music1()
 {
-  int i = 0;
+  int i,j;
   int num;
 
   /* メロディー */
-  int intro_A_add[] = {MI_4,MI_4,MI_4,RE_4,RE_4,RE_4,
-                       DO_4,RE_4,MI_4,FA_4,MI_4,RE_4,
-                       MI_4,FA_4,SO_4,RA_4,DO_5,RA_4,
-                       SO_4,FA_4,MI_4,RE_4,RE_4,RE_4,
-                       MI_4,MI_4,MI_4,MI_4,DO_4,MI_4,
-                       RE_4};
+  const int16_t intro_A[] PROGMEM = {MI_4,MI_4,MI_4,RE_4,RE_4,RE_4,DO_4,RE_4,MI_4,FA_4,MI_4,RE_4,
+                                     MI_4,FA_4,SO_4,RA_4,DO_5,RA_4,SO_4,FA_4,MI_4,RE_4,RE_4,RE_4,
+                                     MI_4,MI_4,MI_4,MI_4,DO_4,MI_4,RE_4};
 
-  int intro_D_add[] = {DO_4,DO_4,DO_4,SO_3,SO_3,SO_3,
-                       MI_3,SO_3,DO_4,RE_4,DO_4,SO_3,
-                       DO_4,RE_4,MI_4,FA_4,RA_4,FA_4,
-                       MI_4,RE_4,DO_4,SO_3,SO_3,SO_3,
-                       DO_4,DO_4,DO_4,DO_4,MI_4,DO_4,
-                       SO_3};
+  const int16_t intro_C[] PROGMEM = {DO_4,DO_4,DO_4,SO_3,SO_3,SO_3,MI_3,SO_3,DO_4,RE_4,DO_4,SO_3,
+                                     DO_4,RE_4,MI_4,FA_4,RA_4,FA_4,MI_4,RE_4,DO_4,SO_3,SO_3,SO_3,
+                                     DO_4,DO_4,DO_4,DO_4,MI_4,DO_4,SO_3};
+                                  
+  const int16_t intro_D[] PROGMEM = {0};                  
 
-  int intro_time[] = {450,150,300,300,300,300,
-                      300,300,300,300,300,300,
-                      300,300,300,300,300,300,
-                      300,300,300,450,150,300,
-                      450,150,300,300,300,300,
-                      1500};
+  const int16_t intro_time[] PROGMEM = {450,150,300,300,300,300,300,300,300,300,300,300,
+                                        300,300,300,300,300,300,300,300,300,450,150,300,
+                                        450,150,300,300,300,300,1500};
 
-  int A1_A_add[] ={SO_4,SO_4};
-  int A1_C_add[] ={FA_4,FA_4};
+  const int16_t melody_A1[] PROGMEM ={SO_4,SO_4};
+  const int16_t melody_C1[] PROGMEM ={FA_4,FA_4};
+  const int16_t melody_D1[] PROGMEM = {0};
 
-  int A1_time[] = {450,300};
+  const int16_t melody_time1[] PROGMEM = {450,300};
 
-  int A2_A_add[] = {DO_5,RE_5,MI_5,FA_5,SO_5,DO_6,LONG,SI_5,RA_5,
-                    RA_5,SO_5,STOP,FA_SHARP_5,FA_SHARP_5,RA_5,SO_5,MI_5,LONG,MI_4,MI_4};
-  int A2_C_add[] = {MI_4,SO_4,DO_5,DO_5,DO_5,LONG,DO_5,LONG,LONG,
-                    FA_5,MI_5,STOP,RE_SHARP_5,RE_SHARP_5,RA_5,MI_5,DO_5,LONG,STOP,STOP};
-  int A2_D_add[] = {DO_3,SI_2,RA_SHARP_2,RA_2,MI_2,LONG,FA_2,LONG,LONG,
-                    DO_3,SO_2,DO_2,LONG,DO_3,LONG,DO_2,MI_2,SO_2,DO_3};
+  const int16_t melody_A2[] PROGMEM = {
+    DO_5,RE_5,MI_5,FA_5,SO_5,DO_6,LONG,SI_5,RA_5,RA_5,SO_5,STOP,FA_SHARP_5,FA_SHARP_5,RA_5,SO_5,MI_5,LONG,MI_4,MI_4,
+    MI_4,MI_4,FA_SHARP_4,SO_SHARP_4,RA_4,LONG,STOP,RA_4,SI_4,DO_5,RE_5,LONG,STOP,RA_4,RA_4,DO_5,DO_5,SI_4,RA_4,SO_4,
+    MI_5,LONG,MI_5,FA_5,MI_5,RE_5,DO_5,LONG,RA_4,DO_5,RE_5,LONG,RE_5,MI_5,RE_5,DO_5,DO_5,LONG,SI_4,SO_4,
+    SO_5,LONG,SO_5,MI_5,FA_5,SO_5,RA_5,LONG,STOP,RA_4,SI_4,DO_5,FA_5,LONG,MI_5,LONG,LONG,DO_5,LONG,STOP,STOP,STOP
+  };
 
-  int A2_time[] = {600,600,600,600,600,600,450,450,300,
-                   900,300,300,300,300,300,600,600,450,450,300};
+  const int16_t melody_C2[] PROGMEM = {
+    MI_4,SO_4,DO_5,DO_5,DO_5,LONG,DO_5,LONG,LONG,FA_5,MI_5,STOP,RE_SHARP_5,RE_SHARP_5,RA_5,MI_5,DO_5,LONG,STOP,STOP,
+    SO_SHARP_3,SO_SHARP_3,RA_3,SI_3,DO_4,LONG,STOP,DO_4,RE_4,MI_4,RA_4,LONG,STOP,FA_SHARP_4,FA_SHARP_4,RA_4,RA_4,RA_4,SO_4,FA_4,FA_4,
+    SO_SHARP_4,LONG,SO_SHARP_4,SO_SHARP_4,SO_SHARP_4,SO_SHARP_4,RA_4,LONG,MI_4,MI_4,RA_4,LONG,RA_4,FA_SHARP_4,FA_SHARP_4,FA_SHARP_4,FA_4,LONG,RE_4,FA_4,
+    DO_SHARP_5,LONG,DO_SHARP_5,DO_SHARP_5,RE_5,MI_5,FA_5,LONG,STOP,FA_4,SO_4,RA_4,RA_4,LONG,RA_4,SO_4,FA_4,MI_4,LONG,STOP,STOP,STOP
+  };
 
-  int A3_A_add[] = {MI_4,MI_4,FA_SHARP_4,SO_SHARP_4,RA_4,LONG,STOP,RA_4,SI_4,DO_5,
-                    RE_5,LONG,STOP,RA_4,RA_4,DO_5,DO_5,SI_4,RA_4,SO_4};
-  int A3_C_add[] = {SO_SHARP_3,SO_SHARP_3,RA_3,SI_3,DO_4,LONG,STOP,DO_4,RE_4,MI_4,
-                    RA_4,LONG,STOP,FA_SHARP_4,FA_SHARP_4,RA_4,RA_4,RA_4,SO_4,FA_4,FA_4};
-  int A3_D_add[] = {MI_2,LONG,MI_2,LONG,RA_2,MI_3,DO_3,LONG,RA_2,LONG,
-                    FA_SHARP_2,RA_2,RE_3,LONG,RE_2,LONG,SO_2,LONG,SO_2,SI_2};
+  const int16_t melody_D2[] PROGMEM = {
+    DO_3,SI_2,RA_SHARP_2,RA_2,MI_2,LONG,FA_2,LONG,LONG,DO_3,SO_2,DO_2,LONG,DO_3,LONG,DO_2,MI_2,SO_2,DO_3,
+    MI_2,LONG,MI_2,LONG,RA_2,MI_3,DO_3,LONG,RA_2,LONG,FA_SHARP_2,RA_2,RE_3,LONG,RE_2,LONG,SO_2,LONG,SO_2,SI_2,
+    MI_2,SO_SHARP_2,SI_2,LONG,MI_2,LONG,RA_2,SI_2,DO_3,RA_2,FA_SHARP_2,RA_2,RE_3,LONG,RE_2,LONG,SO_2,SO_2,RE_3,FA_3,
+    MI_3,DO_SHARP_3,RA_2,LONG,RA_2,LONG,RE_2,MI_2,FA_2,LONG,RE_2,LONG,RE_3,SO_2,FA_3,SO_2,LONG,DO_3,SO_2,DO_2,STOP,STOP
+  };
 
-  int A3_time[] = {600,600,600,600,600,600,300,300,300,300,
-                   600,600,300,300,300,300,600,600,600,600};
+  const uint16_t melody_time2[] PROGMEM = {
+    600,600,600,600,600,600,450,450,300,900,300,300,300,300,300,600,600,450,450,300,
+    600,600,600,600,600,600,300,300,300,300,600,600,300,300,300,300,600,600,600,600,
+    600,600,300,300,300,300,600,600,600,600,600,600,300,300,300,300,600,600,600,600,
+    600,600,300,300,300,300,600,600,300,300,300,300,600,600,600,300,300,600,600,600,300,300
+  };
 
-  int A4_A_add[] = {MI_5,LONG,MI_5,FA_5,MI_5,RE_5,DO_5,LONG,RA_4,DO_5,
-                    RE_5,LONG,RE_5,MI_5,RE_5,DO_5,DO_5,LONG,SI_4,SO_4};
-  int A4_C_add[] = {SO_SHARP_4,LONG,SO_SHARP_4,SO_SHARP_4,SO_SHARP_4,SO_SHARP_4,RA_4,LONG,MI_4,MI_4,
-                    RA_4,LONG,RA_4,FA_SHARP_4,FA_SHARP_4,FA_SHARP_4,FA_4,LONG,RE_4,FA_4};
-  int A4_D_add[] = {MI_2,SO_SHARP_2,SI_2,LONG,MI_2,LONG,RA_2,SI_2,DO_3,RA_2,
-                    FA_SHARP_2,RA_2,RE_3,LONG,RE_2,LONG,SO_2,SO_2,RE_3,FA_3};
+  const MelodySection melody_sections[] PROGMEM = {
+    {pgm_read_word(intro_A), pgm_read_word(intro_C), pgm_read_word(intro_D), pgm_read_word(intro_time), LEN(intro_time)},
+    {pgm_read_word(melody_A1), pgm_read_word(melody_C1), pgm_read_word(melody_D1), pgm_read_word(melody_time1), LEN(melody_time1)},
+    {pgm_read_word(melody_A2), pgm_read_word(melody_C2), pgm_read_word(melody_D2), pgm_read_word(melody_time2), LEN(melody_time2)},
+  };
 
-  int A4_time[] = {600,600,300,300,300,300,600,600,600,600,
-                   600,600,300,300,300,300,600,600,600,600};
+  analogWrite(SPEAKER_PIN, 127);
+  for (uint8_t i = 0; i < LEN(melody_sections); i++) {
+    MelodySection section;
+    memcpy_P(&section, &melody_sections[i], sizeof(MelodySection));
 
-  int A5_A_add[] = {SO_5,LONG,SO_5,MI_5,FA_5,SO_5,RA_5,LONG,STOP,RA_4,SI_4,DO_5,
-                    FA_5,LONG,MI_5,LONG,LONG,DO_5,LONG,STOP,STOP,STOP};
-  int A5_C_add[] = {DO_SHARP_5,LONG,DO_SHARP_5,DO_SHARP_5,RE_5,MI_5,FA_5,LONG,STOP,FA_4,SO_4,RA_4,
-                    RA_4,LONG,RA_4,SO_4,FA_4,MI_4,LONG,STOP,STOP,STOP};
-  int A5_D_add[] = {MI_3,DO_SHARP_3,RA_2,LONG,RA_2,LONG,RE_2,MI_2,FA_2,LONG,RE_2,LONG,
-                    RE_3,SO_2,FA_3,SO_2,LONG,DO_3,SO_2,DO_2,STOP,STOP};
+    const int16_t* melodyA = (const int16_t*)pgm_read_word(&section.melodyA);
+    const int16_t* melodyC = (const int16_t*)pgm_read_word(&section.melodyC);
+    const int16_t* melodyD = (const int16_t*)pgm_read_word(&section.melodyD);
+    const uint16_t* time = (const uint16_t*)pgm_read_word(&section.time);
 
-  int A5_time[] = {600,600,300,300,300,300,600,600,300,300,300,300,
-                   600,600,600,300,300,600,600,600,300,300};
+    for (uint8_t j = 0; j < section.length; j++) {
+      operator_A_add = MELODY_SET(melodyA, j);
+      operator_B_add = operator_A_add << 1;
+      operator_C_add = MELODY_SET(melodyC, j);
+      operator_D_add = MELODY_SET(melodyD, j);
 
-  analogWrite(SPEAKER_PIN,127);
+      delay(pgm_read_word(&time[j]) * 0.45);
 
-  /* 演奏パート */
-  num = sizeof(intro_A_add) / sizeof(intro_A_add[0]);
-  sei();
-  for (i = 0; i < num; i++) {
-    operator_A_add = intro_A_add[i];
-    operator_B_add = operator_A_add << 1;
-    operator_D_add = intro_D_add[i];
-    delay(intro_time[i]*0.45);
-    operator_A_add = 0;
-    operator_B_add = 0;
-    operator_D_add = 0;
-    delay(5);
-  }
-
-  //Aメロ
-  num = sizeof(A1_A_add) / sizeof(A1_A_add[0]);
-  sei();
-  for (i = 0; i < num; i++) {
-    operator_A_add = A1_A_add[i];
-    operator_B_add = operator_A_add << 1;
-    operator_C_add = A1_C_add[i];
-    delay(A1_time[i]*0.45);
-    operator_A_add = 0;
-    operator_B_add = 0;
-    operator_C_add = 0;
-    delay(5);
-  }
-
-  num = sizeof(A2_A_add) / sizeof(A2_A_add[0]);
-  sei();
-  for (i = 0; i < num; i++) {
-    operator_A_add = MELODY_SET(A2_A_add,i);
-    operator_B_add = operator_A_add << 1;
-    operator_C_add = MELODY_SET(A2_C_add,i);
-    operator_D_add = MELODY_SET(A2_D_add,i);
-    delay(A2_time[i]*0.45);
-
-    operator_A_add = LONG_VOWEL(A2_A_add,i);
-    operator_B_add = LONG_VOWEL(A2_A_add,i);
-    operator_C_add = LONG_VOWEL(A2_C_add,i);
-    operator_D_add = LONG_VOWEL(A2_D_add,i);
-  }
-
-  num = sizeof(A3_A_add) / sizeof(A3_A_add[0]);
-  sei();
-  for (i = 0; i < num; i++) {
-    operator_A_add = MELODY_SET(A3_A_add,i);
-    operator_B_add = operator_A_add << 1;
-    operator_C_add = MELODY_SET(A3_C_add,i);
-    operator_D_add = MELODY_SET(A3_D_add,i);
-    delay(A3_time[i]*0.45);
-
-    operator_A_add = LONG_VOWEL(A3_A_add,i);
-    operator_B_add = LONG_VOWEL(A3_A_add,i);
-    operator_C_add = LONG_VOWEL(A3_C_add,i);
-    operator_D_add = LONG_VOWEL(A3_D_add,i);
-  }
-
-  num = sizeof(A4_A_add) / sizeof(A4_A_add[0]);
-  sei();
-  for (i = 0; i < num; i++) {
-    operator_A_add = MELODY_SET(A4_A_add,i);
-    operator_B_add = operator_A_add << 1;
-    operator_C_add = MELODY_SET(A4_C_add,i);
-    operator_D_add = MELODY_SET(A4_D_add,i);
-    delay(A4_time[i]*0.45);
-
-    operator_A_add = LONG_VOWEL(A4_A_add,i);
-    operator_B_add = LONG_VOWEL(A4_A_add,i);
-    operator_C_add = LONG_VOWEL(A4_C_add,i);
-    operator_D_add = LONG_VOWEL(A4_D_add,i);
-  }
-
-  num = sizeof(A5_A_add) / sizeof(A5_A_add[0]);
-  sei();
-  for (i = 0; i < num; i++) {
-    operator_A_add = MELODY_SET(A5_A_add,i);
-    operator_B_add = operator_A_add << 1;
-    operator_C_add = MELODY_SET(A5_C_add,i);
-    operator_D_add = MELODY_SET(A5_D_add,i);
-    delay(A5_time[i]*0.45);
-
-    operator_A_add = LONG_VOWEL(A5_A_add,i);
-    operator_B_add = LONG_VOWEL(A5_A_add,i);
-    operator_C_add = LONG_VOWEL(A5_C_add,i);
-    operator_D_add = LONG_VOWEL(A5_D_add,i);
-  }
-}
-
-void music2()
-{
-  int i = 0;
-  int num;
-
-  /* メロディー */
-  int A2_A_add[] = {DO_5,RE_5,MI_5,FA_5,SO_5,DO_6,LONG,SI_5,RA_5,
-                    RA_5,SO_5,STOP,FA_SHARP_5,FA_SHARP_5,RA_5,SO_5,MI_5,LONG,MI_4,MI_4};
-  int A2_C_add[] = {MI_4,SO_4,DO_5,DO_5,DO_5,LONG,DO_5,LONG,LONG,
-                    FA_5,MI_5,STOP,RE_SHARP_5,RE_SHARP_5,RA_5,MI_5,DO_5,LONG,STOP,STOP};
-  int A2_D_add[] = {DO_3,SI_2,RA_SHARP_2,RA_2,MI_2,LONG,FA_2,LONG,LONG,
-                    DO_3,SO_2,DO_2,LONG,DO_3,LONG,DO_2,MI_2,SO_2,DO_3};
-
-  int A2_time[] = {600,600,600,600,600,600,450,450,300,
-                   900,300,300,300,300,300,600,600,450,450,300};
-
-  analogWrite(SPEAKER_PIN,127);
-
-  /* 演奏パート */
-  num = sizeof(A2_A_add) / sizeof(A2_A_add[0]);
-  sei();
-  for (i = 0; i < num; i++) {
-    operator_A_add = MELODY_SET(A2_A_add,i);
-    operator_B_add = operator_A_add << 1;
-    operator_C_add = MELODY_SET(A2_C_add,i);
-    operator_D_add = MELODY_SET(A2_D_add,i);
-    delay(A2_time[i]*0.45);
-
-    operator_A_add = LONG_VOWEL(A2_A_add,i);
-    operator_B_add = LONG_VOWEL(A2_A_add,i);
-    operator_C_add = LONG_VOWEL(A2_C_add,i);
-    operator_D_add = LONG_VOWEL(A2_D_add,i);
+      operator_A_add = LONG_VOWEL(melodyA, j);
+      operator_B_add = operator_A_add;
+      operator_C_add = LONG_VOWEL(melodyC, j);
+      operator_D_add = LONG_VOWEL(melodyD, j);
+    }
   }
   cli();
   operator_A_add = 0;
@@ -212,47 +110,17 @@ void music2()
   operator_C_add = 0;
   operator_D_add = 0;
   sei();
+}
+
+
+void music2()
+{
+
 }
 
 void music3()
 {
-  int i = 0;
-  int num;
-
-  /* メロディー */
-  int A5_A_add[] = {SO_5,LONG,SO_5,MI_5,FA_5,SO_5,RA_5,LONG,STOP,RA_4,SI_4,DO_5,
-                    FA_5,LONG,MI_5,LONG,LONG,DO_5,LONG,STOP,STOP,STOP};
-  int A5_C_add[] = {DO_SHARP_5,LONG,DO_SHARP_5,DO_SHARP_5,RE_5,MI_5,FA_5,LONG,STOP,FA_4,SO_4,RA_4,
-                    RA_4,LONG,RA_4,SO_4,FA_4,MI_4,LONG,STOP,STOP,STOP};
-  int A5_D_add[] = {MI_3,DO_SHARP_3,RA_2,LONG,RA_2,LONG,RE_2,MI_2,FA_2,LONG,RE_2,LONG,
-                    RE_3,SO_2,FA_3,SO_2,LONG,DO_3,SO_2,DO_2,STOP,STOP};
-
-  int A5_time[] = {600,600,300,300,300,300,600,600,300,300,300,300,
-                   600,600,600,300,300,600,600,600,300,300};
-
-  analogWrite(SPEAKER_PIN,127);
-
-  /* 演奏パート */
-  num = sizeof(A5_A_add) / sizeof(A5_A_add[0]);
-  sei();
-  for (i = 0; i < num; i++) {
-    operator_A_add = MELODY_SET(A5_A_add,i);
-    operator_B_add = operator_A_add << 1;
-    operator_C_add = MELODY_SET(A5_C_add,i);
-    operator_D_add = MELODY_SET(A5_D_add,i);
-    delay(A5_time[i]*0.45);
-
-    operator_A_add = LONG_VOWEL(A5_A_add,i);
-    operator_B_add = LONG_VOWEL(A5_A_add,i);
-    operator_C_add = LONG_VOWEL(A5_C_add,i);
-    operator_D_add = LONG_VOWEL(A5_D_add,i);
-  }
-  cli();
-  operator_A_add = 0;
-  operator_B_add = 0;
-  operator_C_add = 0;
-  operator_D_add = 0;
-  sei();
+  
 }
 
 ISR(TIMER2_OVF_vect) {
@@ -316,43 +184,33 @@ ISR(TIMER2_OVF_vect) {
 }
 
 /* メロディー設定関数 */
-int MELODY_SET(int *melody, int arr){
-  int n = 0;          /* ループ */
-  int cnt = 0;        /* 連続数カウント */
-  int operator_add;   /* 音階周波数 */
+int MELODY_SET(const int16_t* melody, int index) {
+  int n = 0, cnt = 0;
+  int16_t note = pgm_read_word(&melody[index]);
 
-  if(*(melody + arr) == LONG){
-    /* LONGが何回続いているかカウントする */
-    for(n = arr; n > 0; n--){
-      if(*(melody + n) == LONG){
+  if (note == LONG) {
+    for (n = index; n > 0; n--) {
+      if (pgm_read_word(&melody[n]) == LONG) {
         cnt++;
-      }
-      else{
-        break;    /* 連続が終了した段階で終了 */
+      } else {
+        break;
       }
     }
-    operator_add = *(melody + (arr - cnt));
+    return pgm_read_word(&melody[index - cnt]);
+  } else {
+    return note;
   }
-  else{
-    operator_add = *(melody + arr);
-  }
-
-  return operator_add;
 }
 
 /* 長音判定関数 */
-int LONG_VOWEL(int *melody, int arr){
-  int breath;
-  
-  /* 長音でないなら音を区切る */
-  if(*(melody + (arr+1)) != LONG){
-    breath = 0;
+int LONG_VOWEL(const int16_t* melody, int index) {
+  int16_t next = pgm_read_word(&melody[index + 1]);
+  if (next != LONG) {
     delay(1);
-  }
-  else{
-    breath = MELODY_SET(melody, arr);
+    return 0;
+  } else {
+    int freq = MELODY_SET(melody, index);
     delay(1);
+    return freq;
   }
-
-  return breath;
 }

@@ -5,8 +5,6 @@
 #include <Arduino.h>
 
 // タイマ設定値
-#define WGM21 0b10          //タイマ2 動作モード設定
-#define TOIE2 0b10          //割り込み許可
 #define output_pin_A 11
 #define output_pin_B 12
 #define output_pin_C 13
@@ -14,12 +12,6 @@
 
 // タイマ分周
 #define DIV_1 1             //分周無し
-#define DIV_8 2             //8分周
-#define DIV_32 3            //32分周
-#define DIV_64 4            //64分周
-#define DIV_128 5           //128分周
-#define DIV_256 6           //256分周
-#define DIV_1024 7          //1024分周
 
 // 音階表(分周なし)
 #define STOP         0
@@ -110,11 +102,13 @@
 #define DO_8         4389
 #define LONG         9999
 
+#define LEN(x) (sizeof(x) / sizeof((x)[0]))
+
 // プロトタイプ宣言
 void music1();
 void music2();
 void music3();
-int MELODY_SET(int *melody, int arr);
-int LONG_VOWEL(int *melody, int arr);
+int MELODY_SET(const int16_t* melody, int index);
+int LONG_VOWEL(const int16_t* melody, int index);
 
 #endif
